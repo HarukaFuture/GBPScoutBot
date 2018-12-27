@@ -1,0 +1,30 @@
+{
+  "name": "gbpscoutbot",
+  "version": "1.0.0",
+  "description": "https://t.me/GBPScoutBot",
+  "main": "bot.js",
+  "dependencies": {
+    "superagent": "^4.0.0",
+    "superagent-cache": "^3.0.1",
+    "telegraf": "^3.25.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HarukaFuture/GBPScoutBot.git"
+  },
+  "keywords": [
+    "telegram",
+    "bangdream",
+    "bot"
+  ],
+  "author": "HarukaFuture",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/HarukaFuture/GBPScoutBot/issues"
+  },
+  "homepage": "https://github.com/HarukaFuture/GBPScoutBot#readme"
+}
