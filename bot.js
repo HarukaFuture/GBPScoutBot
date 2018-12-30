@@ -150,7 +150,7 @@ function setOptServer(ctx){
 		case 'tw':db.push(`/set/${crc32(ctx.message.chat.id.toString())}`,'tw');break;
 		case 'en':db.push(`/set/${crc32(ctx.message.chat.id.toString())}`,'en');break;
 		default:
-		return ctx.replyWithMarkdown(`ja:Japan Server
+		return ctx.replyWithMarkdown(`jp:Japan Server
 kr:Korea Server
 tw:RoC/Taiwan Server
 en:Intl. Server
