@@ -46,7 +46,6 @@ async function cardInit(){
 	global.resVersion.kr = await getResVer('kr')
 	global.resVersion.tw = await getResVer('tw')
 	global.resVersion.en = await getResVer('en')
-	fs.writeFileSync('star.json',JSON.stringify(global.cardLst.en))
 }
 async function getcard (gameserver){
 	var card = await request.get(`https://api.bandori.ga/v1/${gameserver}/card?&sort=asc&orderKey=cardId`).forceUpdate(true)
