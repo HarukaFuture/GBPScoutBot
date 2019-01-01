@@ -102,12 +102,11 @@ bot.startPolling()
 
 //中间件函数区
 async function scout1 (ctx){ //单抽!
-	console.log(await getCharacterList('tw'))
-	var scouts = await scout(1,getOptServer(ctx.message.chat.id))
+	var scouts = scout(1,getOptServer(ctx.message.chat.id))
 	ctx.replyWithPhoto(scouts[0].media,{"caption":scouts[0].caption,parse_mode:'Markdown','reply_to_message_id':ctx.message.message_id}).catch((err)=>{ctx.reply(`过于频繁!`,{'reply_to_message_id':ctx.message.message_id})})
 }
 async function scout10 (ctx){//抽抽抽抽抽抽抽抽抽抽!
-	var scouts = await scout(10,getOptServer(ctx.message.chat.id))
+	var scouts = scout(10,getOptServer(ctx.message.chat.id))
 	ctx.replyWithMediaGroup(scouts,{'reply_to_message_id':ctx.message.message_id}).catch((err)=>{ctx.reply(`过于频繁!`,{'reply_to_message_id':ctx.message.message_id})})
 }
 //基本函数
@@ -144,7 +143,7 @@ async function getCharacterList(gameserver){//角色ID
 	var chara = await request.get(`https://api.bandori.ga/v1/${gameserver}/chara`).forceUpdate(true) //获取卡牌列表
 	return chara.body.data
 }
-async function scout(i,gameserver){
+function scout(i,gameserver){
 	const arr = [4,3,2]
 	var result = []
 	for (var m=0;m<i;m++){
