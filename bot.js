@@ -66,8 +66,7 @@ bot.command('setserver',(ctx) => {setOptServer(ctx)});
 bot.command('reinit',async (ctx) => {
 	if (config.admin.includes(ctx.message.from.id)){
 		await cardInit()
-		ctx.reply(`Server Resources Version:${JSON.stringify(global.resVersion)}
-卡牌数量:${JSON.stringify(global.cardCount)}`,{'reply_to_message_id':ctx.message.message_id})
+		ctx.reply(`${JSON.stringify({resVersion:global.resVersion,cardCount:global.cardCount},null,2)}`,{'reply_to_message_id':ctx.message.message_id})
 	}else{
 		ctx.reply(`你没有权限`,{'reply_to_message_id':ctx.message.message_id})
 	}
