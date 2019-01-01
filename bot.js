@@ -17,10 +17,20 @@ var db = new JsonDB("serverdb", true, false);
 var gameserver = config.gameserver
 async function cardInit(){
 	let cardLstEN = {}
+	let charaLstJP = await getCharacterList('jp')
+	let charaLstKR = await getCharacterList('kr')
+	let charaLstTW = await getCharacterList('tw')
+	let charaLstEN = await getCharacterList('en')
+
 	global.star = {}
 	global.cardCount = {}
 	global.cardLst = {}
 	global.resVersion = {}
+	global.charaLst = {}
+	global.charaLst.jp = []
+	global.charaLst.kr = []
+	global.charaLst.tw = []
+	global.charaLst.en = []
 	cardLstEN.data = (await getcard('en')).data.filter((obj)=>{
 		let now = Date.now()
 		return obj.releasedAt < now
@@ -46,6 +56,20 @@ async function cardInit(){
 	global.resVersion.kr = await getResVer('kr')
 	global.resVersion.tw = await getResVer('tw')
 	global.resVersion.en = await getResVer('en')
+
+	charaLstJP.forEach(function(element, index) {
+    global.charaLst.jp[element.characterId] = element;
+	});
+	charaLstKR.forEach(function(element, index) {
+    global.charaLst.kr[element.characterId] = element;
+	});
+	charaLstTW.forEach(function(element, index) {
+    global.charaLst.tw[element.characterId] = element;
+	});
+	charaLstEN.forEach(function(element, index) {
+    global.charaLst.en[element.characterId] = element;
+	});
+	
 }
 async function getcard (gameserver){
 	var card = await request.get(`https://api.bandori.ga/v1/${gameserver}/card?&sort=asc&orderKey=cardId`).forceUpdate(true)
@@ -78,6 +102,7 @@ bot.startPolling()
 
 //中间件函数区
 async function scout1 (ctx){ //单抽!
+	console.log(await getCharacterList('tw'))
 	var scouts = await scout(1,getOptServer(ctx.message.chat.id))
 	ctx.replyWithPhoto(scouts[0].media,{"caption":scouts[0].caption,parse_mode:'Markdown','reply_to_message_id':ctx.message.message_id}).catch((err)=>{ctx.reply(`过于频繁!`,{'reply_to_message_id':ctx.message.message_id})})
 }
@@ -112,9 +137,12 @@ function starRarity (data){ //星级卡牌筛选
 	}
 	return JSON.stringify({star2,star3,star4});
 }
-async function characterName(cid,gameserver){//角色ID
-	var chara = await request.get(`https://api.bandori.ga/v1/${gameserver}/chara/${cid}`) //获取卡牌列表
-	return chara.body.characterName
+function characterName(cid,gameserver){//角色ID
+	return global.charaLst[gameserver][cid].characterName
+}
+async function getCharacterList(gameserver){//角色ID
+	var chara = await request.get(`https://api.bandori.ga/v1/${gameserver}/chara`).forceUpdate(true) //获取卡牌列表
+	return chara.body.data
 }
 async function scout(i,gameserver){
 	const arr = [4,3,2]
@@ -123,7 +151,7 @@ async function scout(i,gameserver){
 		var renindex = arr[parseInt(returnRandom()*arr.length)]
 		var card = global.star[gameserver]['star'+renindex][Math.floor((Math.random()*global.star[gameserver]['star'+renindex].length))]
 		var url = `https://bangdream.ga/card/${gameserver}/${card.cardId}/0`
-		var name = await characterName(card.characterId,gameserver)
+		var name = characterName(card.characterId,gameserver)
 		result.push({
 			type:'photo',
 			media:`https://res.bandori.ga/assets-${gameserver}/characters/resourceset/${card.cardRes}_rip/card_normal.png`,
