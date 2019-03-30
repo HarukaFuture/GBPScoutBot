@@ -9,12 +9,12 @@ const Telegram = require('telegraf/telegram');
 const request = require('superagent');
 var JsonDB = require('node-json-db');
 var crc32 = require('crc32');
+var cron = require('node-cron');
 //定义区
 const bot = new Telegraf(config.apikey);
 require('superagent-cache')(request)
 var db = new JsonDB("serverdb", true, false);
 //END
-var gameserver = config.gameserver
 async function cardInit(){
 	let cardLstEN = {}
 	let charaLstJP = await getCharacterList('jp')
@@ -69,7 +69,6 @@ async function cardInit(){
 	charaLstEN.forEach(function(element, index) {
     global.charaLst.en[element.characterId] = element;
 	});
-	
 }
 async function getcard (gameserver){
 	var card = await request.get(`https://api.bandori.ga/v1/${gameserver}/card?&sort=asc&orderKey=cardId`).forceUpdate(true)
@@ -82,6 +81,7 @@ async function getResVer (gameserver){
 bot.telegram.getMe().then((botInfo) => {bot.options.username = botInfo.username})
 void async function(){
 	await cardInit()
+	bot.startPolling()
 }()
 
 bot.command('ping',(ctx) => {ctx.reply('没炸!')});
@@ -91,23 +91,26 @@ bot.command('reinit',async (ctx) => {
 		await cardInit()
 		ctx.reply(`${JSON.stringify({resVersion:global.resVersion,cardCount:global.cardCount},null,2)}`,{'reply_to_message_id':ctx.message.message_id})
 	}else{
-		ctx.reply(`你没有权限`,{'reply_to_message_id':ctx.message.message_id})
+		ctx.reply(`Permission ERROR!`,{'reply_to_message_id':ctx.message.message_id})
 	}
 });
 bot.command('scout1', (ctx) => {scout1(ctx)});
 bot.command('scout10', (ctx) => {scout10(ctx)});
+bot.command('resver', (ctx) => {getResVersion(ctx)});
 bot.on('inline_query', (ctx) => {inlineScout(ctx);console.log(ctx.inlineQuery)})
-bot.startPolling()
 
+cron.schedule('0 0 */2 * *', () => {
+	cardInit()
+});
 
 //中间件函数区
-async function scout1 (ctx){ //单抽!
+function scout1 (ctx){ //单抽!
 	var scouts = scout(1,getOptServer(ctx.message.chat.id))
-	ctx.replyWithPhoto(scouts[0].media,{"caption":scouts[0].caption,parse_mode:'Markdown','reply_to_message_id':ctx.message.message_id}).catch((err)=>{ctx.reply(`过于频繁!`,{'reply_to_message_id':ctx.message.message_id})})
+	return ctx.replyWithPhoto(scouts[0].media,{"caption":scouts[0].caption,parse_mode:'Markdown','reply_to_message_id':ctx.message.message_id}).catch((err)=>{ctx.reply(`过于频繁!`,{'reply_to_message_id':ctx.message.message_id})})
 }
-async function scout10 (ctx){//抽抽抽抽抽抽抽抽抽抽!
+function scout10 (ctx){//抽抽抽抽抽抽抽抽抽抽!
 	var scouts = scout(10,getOptServer(ctx.message.chat.id))
-	ctx.replyWithMediaGroup(scouts,{'reply_to_message_id':ctx.message.message_id}).catch((err)=>{ctx.reply(`过于频繁!`,{'reply_to_message_id':ctx.message.message_id})})
+	return ctx.replyWithMediaGroup(scouts,{'reply_to_message_id':ctx.message.message_id}).catch((err)=>{ctx.reply(`过于频繁!`,{'reply_to_message_id':ctx.message.message_id})})
 }
 //基本函数
 function returnRandom(){ //随机数函数
@@ -161,12 +164,13 @@ function scout(i,gameserver){
 	return result
 }
 function getOptServer(chatid){
+	let data
 	try{
-		console.log(db.getData(`/set/${crc32(chatid.toString())}`))
-	}catch{
+		data = db.getData(`/set/${crc32(chatid.toString())}`)
+	}catch(e){
 		return config.gameserver
 	}
-	return db.getData(`/set/${crc32(chatid.toString())}`)
+	return data
 }
 function setOptServer(ctx){
 	switch(ctx.message.text.substr(ctx.message.entities[0]['length']+1)){
@@ -194,4 +198,13 @@ async function inlineScout(ctx){
 		parse_mode:'Markdown',
 		title:'Scout one!'+'Data Lang:'+getOptServer(ctx.inlineQuery.from.id)
 	}],{cache_time:0,is_personal:true}))
+}
+function getResVersion(ctx){
+	var resVer = {resVersion:global.resVersion,cardCount:global.cardCount}
+	ctx.replyWithMarkdown(`Resources Version:
+Japan:${resVer.resVersion.jp}
+Korea:${resVer.resVersion.kr}
+RoC/Taiwan:${resVer.resVersion.tw}
+International:${resVer.resVersion.en}
+`,{'reply_to_message_id':ctx.message.message_id})
 }
