@@ -15,60 +15,34 @@ const bot = new Telegraf(config.apikey);
 require('superagent-cache')(request)
 var db = new JsonDB("serverdb", true, false);
 //END
+const gameServerArray = ['jp','kr','tw','en']
 async function cardInit(){
-	let cardLstEN = {}
-	let charaLstJP = await getCharacterList('jp')
-	let charaLstKR = await getCharacterList('kr')
-	let charaLstTW = await getCharacterList('tw')
-	let charaLstEN = await getCharacterList('en')
-
 	global.star = {}
 	global.cardCount = {}
 	global.cardLst = {}
 	global.resVersion = {}
 	global.charaLst = {}
-	global.charaLst.jp = []
-	global.charaLst.kr = []
-	global.charaLst.tw = []
-	global.charaLst.en = []
-	cardLstEN.data = (await getcard('en')).data.filter((obj)=>{
-		let now = Date.now()
-		return obj.releasedAt < now
+	await gameServerArray.forEach(async function(server, index){
+		let charalst = await getCharacterList(server)
+		let cardLst = {}
+		if(server == 'kr'){
+			cardLst.data = (await getcard(server)).data
+		}else{
+			cardLst.data = (await getcard(server)).data.filter((obj)=>{
+				let now = Date.now()
+				return obj.releasedAt <= now
+			})
+		}
+		cardLst.totalCount = cardLst.data.length
+		global.charaLst[server] = []
+		charalst.forEach(function(element, index) {
+			global.charaLst[server][element.characterId] = element;
+		});
+		global.resVersion[server] = await getResVer(server)
+		global.cardCount[server] = cardLst.totalCount
+		global.star[server] = JSON.parse(starRarity(cardLst.data))
+
 	})
-	cardLstEN.totalCount = cardLstEN.data.length
-	
-	global.cardLst.jp = await getcard('jp')
-	global.cardLst.kr = await getcard('kr')
-	global.cardLst.tw = await getcard('tw')
-	global.cardLst.en = cardLstEN
-	
-	global.star.jp = JSON.parse(starRarity(global.cardLst.jp.data));
-	global.star.kr = JSON.parse(starRarity(global.cardLst.kr.data));
-	global.star.tw = JSON.parse(starRarity(global.cardLst.tw.data));
-	global.star.en = JSON.parse(starRarity(global.cardLst.en.data));
-
-	global.cardCount.jp = global.cardLst.jp.totalCount
-	global.cardCount.kr = global.cardLst.kr.totalCount
-	global.cardCount.tw = global.cardLst.tw.totalCount
-	global.cardCount.en = global.cardLst.en.totalCount
-	
-	global.resVersion.jp = await getResVer('jp')
-	global.resVersion.kr = await getResVer('kr')
-	global.resVersion.tw = await getResVer('tw')
-	global.resVersion.en = await getResVer('en')
-
-	charaLstJP.forEach(function(element, index) {
-    global.charaLst.jp[element.characterId] = element;
-	});
-	charaLstKR.forEach(function(element, index) {
-    global.charaLst.kr[element.characterId] = element;
-	});
-	charaLstTW.forEach(function(element, index) {
-    global.charaLst.tw[element.characterId] = element;
-	});
-	charaLstEN.forEach(function(element, index) {
-    global.charaLst.en[element.characterId] = element;
-	});
 }
 async function getcard (gameserver){
 	var card = await request.get(`https://api.bandori.ga/v1/${gameserver}/card?&sort=asc&orderKey=cardId`).forceUpdate(true)
@@ -99,7 +73,7 @@ bot.command('scout10', (ctx) => {scout10(ctx)});
 bot.command('resver', (ctx) => {getResVersion(ctx)});
 bot.on('inline_query', (ctx) => {inlineScout(ctx);console.log(ctx.inlineQuery)})
 
-cron.schedule('0 0 */2 * *', () => {
+cron.schedule('0 0 * * *', () => {
 	cardInit()
 });
 
