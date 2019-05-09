@@ -22,7 +22,8 @@ async function cardInit(){
 	global.cardLst = {}
 	global.resVersion = {}
 	global.charaLst = {}
-	await gameServerArray.forEach(async function(server, index){
+	for(let i = 0; i < gameServerArray.length; i++) {
+		let server = gameServerArray[i]
 		let charalst = await getCharacterList(server)
 		let cardLst = {}
 		if(server == 'kr'){
@@ -40,9 +41,9 @@ async function cardInit(){
 		});
 		global.resVersion[server] = await getResVer(server)
 		global.cardCount[server] = cardLst.totalCount
-		global.star[server] = JSON.parse(starRarity(cardLst.data))
-
-	})
+		global.star[server] = starRarity(cardLst.data)
+		console.log(server)
+	}
 }
 async function getcard (gameserver){
 	var card = await request.get(`https://api.bandori.ga/v1/${gameserver}/card?&sort=asc&orderKey=cardId`).forceUpdate(true)
@@ -111,7 +112,7 @@ function starRarity (data){ //星级卡牌筛选
 			case 4:star4.push(data[i]);break;
 		}
 	}
-	return JSON.stringify({star2,star3,star4});
+	return {star2,star3,star4};
 }
 function characterName(cid,gameserver){//角色ID
 	return global.charaLst[gameserver][cid].characterName
