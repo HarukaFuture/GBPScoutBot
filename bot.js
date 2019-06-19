@@ -15,7 +15,7 @@ const bot = new Telegraf(config.apikey);
 require('superagent-cache')(request)
 var db = new JsonDB("serverdb", true, false);
 //END
-const gameServerArray = ['jp','kr','tw','en']
+const gameServerArray = ['jp','kr','tw','en'/* ,'cn' */]
 async function cardInit(){
 	global.star = {}
 	global.cardCount = {}
@@ -26,10 +26,11 @@ async function cardInit(){
 		let server = gameServerArray[i]
 		let charalst = await getCharacterList(server)
 		let cardLst = {}
-		if(server == 'kr'){
-			cardLst.data = (await getcard(server)).data
+		let tempCardList = (await getcard(server))
+		if(tempCardList.data[0].releasedAt == undefined){
+			cardLst.data = tempCardList.data
 		}else{
-			cardLst.data = (await getcard(server)).data.filter((obj)=>{
+			cardLst.data = tempCardList.data.filter((obj)=>{
 				let now = Date.now()
 				return obj.releasedAt <= now
 			})
@@ -153,12 +154,14 @@ function setOptServer(ctx){
 		case 'kr':db.push(`/set/${crc32(ctx.message.chat.id.toString())}`,'kr');break;
 		case 'tw':db.push(`/set/${crc32(ctx.message.chat.id.toString())}`,'tw');break;
 		case 'en':db.push(`/set/${crc32(ctx.message.chat.id.toString())}`,'en');break;
+		//case 'cn':db.push(`/set/${crc32(ctx.message.chat.id.toString())}`,'cn');break;
 		default:
 		return ctx.replyWithMarkdown(`jp:Japan Server
 kr:Korea Server
 tw:RoC/Taiwan Server
-en:Intl. Server
-`,{'reply_to_message_id':ctx.message.message_id})
+en:Intl. Server`
+//cn:China Server
+,{'reply_to_message_id':ctx.message.message_id})
 	}
 	ctx.reply(`Data Lang:${db.getData('/set/'+(crc32(ctx.message.chat.id.toString())))}`,{'reply_to_message_id':ctx.message.message_id})
 }
@@ -180,6 +183,7 @@ function getResVersion(ctx){
 Japan:${resVer.resVersion.jp}
 Korea:${resVer.resVersion.kr}
 RoC/Taiwan:${resVer.resVersion.tw}
-International:${resVer.resVersion.en}
-`,{'reply_to_message_id':ctx.message.message_id})
+International:${resVer.resVersion.en}`
+//China:${resVer.resVersion.cn}
+,{'reply_to_message_id':ctx.message.message_id})
 }
