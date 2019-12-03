@@ -1,6 +1,6 @@
 {
   "name": "gbpscoutbot",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "description": "https://t.me/GBPScoutBot",
   "main": "bot.js",
   "dependencies": {

@@ -5,17 +5,18 @@ const fs = require('fs');
 const config = JSON.parse(fs.readFileSync('config.json','utf8'))
 //NPM区
 const Telegraf = require('telegraf');
-const Telegram = require('telegraf/telegram');
 const request = require('superagent');
 var JsonDB = require('node-json-db');
 var crc32 = require('crc32');
 var cron = require('node-cron');
+const zlib = require('zlib');
+
 //定义区
 const bot = new Telegraf(config.apikey);
 require('superagent-cache')(request)
 var db = new JsonDB("serverdb", true, false);
 //END
-const gameServerArray = ['jp','kr','tw','en'/* ,'cn' */]
+const gameServerArray = ['jp','kr','tw','en','cn']
 async function cardInit(){
 	global.star = {}
 	global.cardCount = {}
@@ -74,6 +75,14 @@ bot.command('scout1', (ctx) => {scout1(ctx)});
 bot.command('scout10', (ctx) => {scout10(ctx)});
 bot.command('resver', (ctx) => {getResVersion(ctx)});
 bot.on('inline_query', (ctx) => {inlineScout(ctx);console.log(ctx.inlineQuery)})
+bot.command('dumpcard',async (ctx) => {
+	if (config.admin.includes(ctx.message.from.id)){
+		let file = zlib.gzipSync(Buffer.from(JSON.stringify({star:global.star})))
+		ctx.replyWithDocument({source:file,filename: 'dump.json.gz'},{'reply_to_message_id':ctx.message.message_id})
+	}else{
+		ctx.reply(`Permission ERROR!`,{'reply_to_message_id':ctx.message.message_id})
+	}
+});
 
 cron.schedule('0 0 * * *', () => {
 	cardInit()
@@ -154,13 +163,13 @@ function setOptServer(ctx){
 		case 'kr':db.push(`/set/${crc32(ctx.message.chat.id.toString())}`,'kr');break;
 		case 'tw':db.push(`/set/${crc32(ctx.message.chat.id.toString())}`,'tw');break;
 		case 'en':db.push(`/set/${crc32(ctx.message.chat.id.toString())}`,'en');break;
-		//case 'cn':db.push(`/set/${crc32(ctx.message.chat.id.toString())}`,'cn');break;
+		case 'cn':db.push(`/set/${crc32(ctx.message.chat.id.toString())}`,'cn');break;
 		default:
 		return ctx.replyWithMarkdown(`jp:Japan Server
 kr:Korea Server
 tw:RoC/Taiwan Server
-en:Intl. Server`
-//cn:China Server
+en:Intl. Server
+cn:China Server`
 ,{'reply_to_message_id':ctx.message.message_id})
 	}
 	ctx.reply(`Data Lang:${db.getData('/set/'+(crc32(ctx.message.chat.id.toString())))}`,{'reply_to_message_id':ctx.message.message_id})
@@ -183,7 +192,7 @@ function getResVersion(ctx){
 Japan:${resVer.resVersion.jp}
 Korea:${resVer.resVersion.kr}
 RoC/Taiwan:${resVer.resVersion.tw}
-International:${resVer.resVersion.en}`
-//China:${resVer.resVersion.cn}
+International:${resVer.resVersion.en}
+China:${resVer.resVersion.cn}`
 ,{'reply_to_message_id':ctx.message.message_id})
 }
