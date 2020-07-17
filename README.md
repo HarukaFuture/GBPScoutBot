@@ -24,3 +24,6 @@ gameserver的值:
 
 ## 感谢
 卡牌数据来源: https://bandori.ga
+
+## 其他
+此Bot已经被送到[Github北极存档](https://archiveprogram.github.com/)了
